@@ -1,0 +1,62 @@
+#include <Wire.h>
+
+int colours[] = {8, 9, 10}; // Colour LEDs
+int leds[] = {2, 3, 4, 5, 6, 7}; // LED positions
+int colourMapping[6]; // Colour mapping
+
+void setup() {
+  Wire.begin(8); // Join I2C bus with address #8
+  Wire.onReceive(receiveEvent); // Register event
+
+  // Initialize LED pins
+  for (int i = 2; i <= 10; i++) {
+    pinMode(i, OUTPUT);
+  }
+}
+
+void shuffleColoursAndLEDs() {
+  // Shuffle colours
+  for (int i = 0; i < 3; i++) {
+    int randomIndex = random(0, 3);
+    int temp = colours[i];
+    colours[i] = colours[randomIndex];
+    colours[randomIndex] = temp;
+  }
+
+  // Assign colours to positions
+  for (int i = 0; i < 6; i++) {
+    colourMapping[i] = colours[i / 2];
+  }
+
+  // Display the colour sequence
+  for (int k = 0; k < 3; k++) { // Shorten display for simplicity
+    for (int i = 0; i < 6; i++) {
+      digitalWrite(leds[i], HIGH);
+      delay(100);
+      digitalWrite(leds[i], LOW);
+    }
+  }
+}
+
+void lightUpLED(int position) {
+  int colourLED = colourMapping[position];
+  digitalWrite(colourLED, HIGH);
+  delay(500);
+  digitalWrite(colourLED, LOW);
+}
+
+void receiveEvent(int howMany) {
+  while (Wire.available()) {
+    char command = Wire.read();
+    if (command == 'S') {
+      shuffleColoursAndLEDs();
+    } else if (command >= '0' && command <= '5') {
+      int buttonIndex = command - '0';
+      lightUpLED(buttonIndex);
+    }
+  }
+}
+
+void loop() {
+  // Nothing to do here, everything is handled in the receiveEvent
+}
